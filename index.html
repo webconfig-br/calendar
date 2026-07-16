@@ -1,163 +1,247 @@
 <!DOCTYPE html>
+
 <html>
 <head>
-<meta charset='utf-8' />
-<link rel='stylesheet' href='https://realdrberg-my.sharepoint.com/personal/eder_santana_drberg_com/Documents/Calendar/skeleton.css' />
-<link rel='stylesheet' href='https://realdrberg-my.sharepoint.com/personal/eder_santana_drberg_com/Documents/Calendar/theme.css' />
-<link rel='stylesheet' href='https://realdrberg-my.sharepoint.com/personal/eder_santana_drberg_com/Documents/Calendar/palette.css' />
-<script src='https://realdrberg-my.sharepoint.com/personal/eder_santana_drberg_com/Documents/Calendar/fullcalendar.global.js'></script>
-<script src='https://realdrberg-my.sharepoint.com/personal/eder_santana_drberg_com/Documents/Calendar/global.js'></script>
+<meta charset="utf-8" />
+
+<link rel="stylesheet" href="https://raw.githubusercontent.com/webconfig-br/calendar/main/skeleton.css" />
+<link rel="stylesheet" href="https://raw.githubusercontent.com/webconfig-br/calendar/main/theme.css" />
+<link rel="stylesheet" href="https://raw.githubusercontent.com/webconfig-br/calendar/main/palette.css" />
+
+<link
+  href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.css"
+  rel="stylesheet"
+/>
+
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.19/index.global.min.js"></script>
+
 <script>
   document.addEventListener('DOMContentLoaded', function() {
-    var calendarEl = document.getElementById('calendar');
-    var calendar = new FullCalendar.Calendar(calendarEl, {
+    const calendarEl = document.getElementById('calendar');
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
       headerToolbar: {
         left: 'prev,next today',
         center: 'title',
         right: 'dayGridMonth,timeGridWeek,timeGridDay'
       },
-      initialDate: '2023-01-12',
+
+      // Exibe automaticamente a data atual ao carregar o calendário
+      initialDate: new Date(),
+
+      // Define a visualização inicial
+      initialView: 'dayGridMonth',
+
       navLinks: true,
-      selectable: true,
-      selectMirror: true,
-      select: function(info) {
-        var title = prompt('Event Title:');
-        if (title) {
-          calendar.addEvent({
-            title: title,
-            start: info.start,
-            end: info.end,
-            allDay: info.allDay
-          })
-        }
-        calendar.unselect()
-      },
+
+      // Calendário somente para visualização
+      selectable: false,
+      selectMirror: false,
+      editable: false,
+      eventStartEditable: false,
+      eventDurationEditable: false,
+      droppable: false,
+
       eventClick: function(info) {
+        info.jsEvent.preventDefault();
         openEventModal(info.event);
       },
-      editable: true,
+
       dayMaxEvents: true,
+
       events: [
         {
-          title: 'Test Event AAA',
-          start: '2026-07-23',
-          end: '2026-07-23',
-          description: 'Test event AAA description'
+          title: 'Evento teste AAA',
+          start: '2026-07-16',
+          end: '2026-07-17',
+          description: 'Testando evento de um dia pro outro'
         },        {
-          title: 'Test Event BBB',
-          start: '2026-07-31',
-          end: '2026-07-31',
-          description: 'Test event BBB description '
+          title: 'Evento teste BBB',
+          start: '2026-07-16',
+          end: '2026-07-16',
+          description: 'Teste de evento terminando no mesmo dia'
         },        {
-          title: 'Test Event CCC',
-          start: '2026-07-03',
-          end: '2026-07-03',
-          description: 'Test event CCC'
+          title: 'Evento teste CCC',
+          start: '2026-07-16',
+          end: '2026-07-20',
+          description: 'Evento teste com maior duração'
         }
       ]
     });
+
     calendar.render();
   });
 
   function openEventModal(event) {
     const modal = document.getElementById('eventModal');
     const modalContent = document.getElementById('modalContent');
-    
-    // Formatar datas
-    const startDate = event.start ? new Date(event.start).toLocaleString('pt-BR') : 'Não definido';
-    const endDate = event.end ? new Date(event.end).toLocaleString('pt-BR') : 'Não definido';
-    
-    // Montar conteúdo do modal
+
+    const dateOptions = {
+      dateStyle: 'medium',
+      timeStyle: 'short'
+    };
+
+    const startDate = event.start
+      ? new Date(event.start).toLocaleString('en-US', dateOptions)
+      : 'Not defined';
+
+    const endDate = event.end
+      ? new Date(event.end).toLocaleString('en-US', dateOptions)
+      : 'Not defined';
+
+    const description =
+      event.extendedProps.description || 'No description';
+
     let content = `
-      <h2>${event.title}</h2>
+      <h2>${escapeHtml(event.title)}</h2>
+
       <div class="event-details">
-        <p><strong>Start Date:</strong> ${startDate}</p>
-        <p><strong>End Date:</strong> ${endDate}</p>
-        <p><strong>Description:</strong> ${event.extendedProps.description || 'No description'}</p>
+        <p>
+          <strong>Start Date:</strong>
+          ${startDate}
+        </p>
+
+        <p>
+          <strong>End Date:</strong>
+          ${endDate}
+        </p>
+
+        <p>
+          <strong>Description:</strong>
+          ${escapeHtml(description)}
+        </p>
     `;
-    
+
     if (event.url) {
-      content += `<p><a href="${event.url}" target="_blank" class="event-link">Open link</a></p>`;
+      content += `
+        <p>
+          <a
+            href="${escapeAttribute(event.url)}"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="event-link"
+          >
+            Open link
+          </a>
+        </p>
+      `;
     }
-    
+
     content += `
-      <div class="modal-actions">
-        <!--<button class="btn-delete" onclick="deleteEvent('${event.id}')">Delete Event</button>-->
-        <button class="btn-close" onclick="closeEventModal()">Close</button>
-      </div>
+        <div class="modal-actions">
+          <button
+            type="button"
+            class="btn-close"
+            onclick="closeEventModal()"
+          >
+            Close
+          </button>
+        </div>
       </div>
     `;
-    
+
     modalContent.innerHTML = content;
     modal.style.display = 'flex';
+    document.body.classList.add('modal-open');
   }
 
   function closeEventModal() {
     const modal = document.getElementById('eventModal');
+
     modal.style.display = 'none';
+    document.body.classList.remove('modal-open');
   }
 
-  function deleteEvent(eventId) {
-    if (confirm('Tem certeza que deseja deletar este evento?')) {
-      const calendarEl = document.getElementById('calendar');
-      const calendar = FullCalendar.getCalendarById(calendarEl);
-      const event = calendar.getEventById(eventId);
-      if (event) {
-        event.remove();
-        closeEventModal();
-      }
-    }
+  function escapeHtml(value) {
+    const div = document.createElement('div');
+    div.textContent = value || '';
+    return div.innerHTML;
   }
 
-  // Fechar modal ao clicar fora dele
-  window.onclick = function(event) {
+  function escapeAttribute(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  window.addEventListener('click', function(event) {
     const modal = document.getElementById('eventModal');
+
     if (event.target === modal) {
-      modal.style.display = 'none';
+      closeEventModal();
     }
-  }
+  });
+
+  document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+      closeEventModal();
+    }
+  });
 </script>
+
 <style>
   body {
     margin: 40px 10px;
     padding: 0;
     font-family: Arial, Helvetica Neue, Helvetica, sans-serif;
     font-size: 14px;
+    background-color: #ffffff;
   }
+
+  body.modal-open {
+    overflow: hidden;
+  }
+
   #calendar {
     max-width: 1100px;
     margin: 0 auto;
   }
 
-  /* Estilos do Modal */
   #eventModal {
     display: none;
     position: fixed;
-    z-index: 1000;
-    left: 0;
-    top: 0;
+    z-index: 10000;
+    inset: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.6);
+    padding: 20px;
+    box-sizing: border-box;
+
+    background-color: rgba(225, 225, 225, 0.72);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+
     align-items: center;
     justify-content: center;
   }
 
   #modalContent {
-    background-color: #fff;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-    max-width: 500px;
+    box-sizing: border-box;
     width: 90%;
-    animation: slideIn 0.3s ease-out;
+    max-width: 500px;
+    max-height: 85vh;
+    overflow-y: auto;
+
+    padding: 30px;
+    background-color: #ffffff;
+    border: 1px solid #dddddd;
+    border-radius: 12px;
+
+    box-shadow:
+      0 15px 40px rgba(0, 0, 0, 0.18);
+
+    animation: slideIn 0.25s ease-out;
   }
 
   @keyframes slideIn {
     from {
-      transform: translateY(-50px);
+      transform: translateY(-25px);
       opacity: 0;
     }
+
     to {
       transform: translateY(0);
       opacity: 1;
@@ -165,23 +249,26 @@
   }
 
   #modalContent h2 {
-    margin-top: 0;
-    color: #333;
+    margin: 0;
+    padding-bottom: 12px;
+    color: #333333;
     border-bottom: 2px solid #007bff;
-    padding-bottom: 10px;
+    font-size: 22px;
   }
 
   .event-details {
-    margin: 20px 0;
+    margin-top: 20px;
   }
 
   .event-details p {
-    margin: 10px 0;
+    margin: 12px 0;
     line-height: 1.6;
+    color: #444444;
+    word-break: break-word;
   }
 
   .event-details strong {
-    color: #555;
+    color: #222222;
   }
 
   .event-link {
@@ -196,51 +283,69 @@
 
   .modal-actions {
     display: flex;
-    gap: 10px;
-    margin-top: 20px;
     justify-content: flex-end;
-  }
-
-  .btn-delete, .btn-close {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: bold;
-    transition: background-color 0.3s;
-  }
-
-  .btn-delete {
-    background-color: #dc3545;
-    color: white;
-  }
-
-  .btn-delete:hover {
-    background-color: #c82333;
+    margin-top: 24px;
   }
 
   .btn-close {
+    padding: 10px 22px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+
     background-color: #6c757d;
-    color: white;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: bold;
+    transition:
+      background-color 0.2s ease,
+      transform 0.2s ease;
   }
 
   .btn-close:hover {
     background-color: #5a6268;
+    transform: translateY(-1px);
   }
 
-  /* Cursor pointer nos eventos */
   .fc-event {
     cursor: pointer;
   }
+
+  /* Os dias não apresentam cursor de seleção */
+  .fc-daygrid-day,
+  .fc-timegrid-slot {
+    cursor: default;
+  }
+
+  @media (max-width: 600px) {
+    body {
+      margin: 15px 5px;
+    }
+
+    #modalContent {
+      width: 100%;
+      padding: 22px;
+    }
+
+    #modalContent h2 {
+      font-size: 19px;
+    }
+  }
 </style>
+
 </head>
+
 <body>
-  <div id='calendar'></div>
-  
-  <!-- Modal para exibir detalhes do evento -->
-  <div id='eventModal'>
-    <div id='modalContent'></div>
+  <div id="calendar"></div>
+
+  <div
+    id="eventModal"
+    role="dialog"
+    aria-modal="true"
+    aria-label="Event details"
+  >
+    <div id="modalContent"></div>
   </div>
 </body>
 </html>
